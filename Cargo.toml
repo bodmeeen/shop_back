@@ -1,0 +1,19 @@
+[package]
+name = "shop_back"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+# Веб-сервер та асинхронність
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+
+# Робота з JSON
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# База даних
+sqlx = { version = "0.8", features = ["runtime-tokio", "sqlite"] }
+
+# Змінні оточення (для читання .env файлів)
+dotenvy = "0.15"
