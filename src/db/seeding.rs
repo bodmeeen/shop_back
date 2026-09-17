@@ -1,5 +1,8 @@
 use sqlx::SqlitePool;
 
+// останнім рядком в таблиці повинен бути created_at
+// але він не працював тож потрібно буде повернути його
+// в майбутньому
 pub async fn setup_database(pool: &SqlitePool) {
     sqlx::query(
         r#"
@@ -9,8 +12,7 @@ pub async fn setup_database(pool: &SqlitePool) {
             body TEXT NOT NULL,
             old_price INTEGER,
             price INTEGER NOT NULL,
-            status TEXT NOT NULL,
-            created_at TIMESTAMP
+            status TEXT NOT NULL
         )
         "#
     )
