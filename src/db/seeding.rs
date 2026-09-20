@@ -12,7 +12,8 @@ pub async fn setup_database(pool: &SqlitePool) {
             body TEXT NOT NULL,
             old_price INTEGER,
             price INTEGER NOT NULL,
-            status TEXT NOT NULL
+            status TEXT NOT NULL,
+            created_at DEFAULT CURRENT_TIMESTAMP
         )
         "#
     )
