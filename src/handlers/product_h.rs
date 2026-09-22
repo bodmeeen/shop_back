@@ -1,5 +1,5 @@
 use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::product::{Product, CreateProductSchema, UpdateProductSchema}};
+use crate::{AppState, models::products::{Product, CreateProductSchema, UpdateProductSchema}};
 use serde_json::json;
 
 
@@ -81,31 +81,29 @@ pub async fn delete_product(State(state): State<AppState>,
 
         match result {
             Ok(product) => {
-                let product_response = json!({
-                    "status": "success",
-                    "data": {
-                        "product": product
-                    }
-                });
-                Ok(Json(product_response))
+            let product_response = json!({
+                "status": "success",
+                "data": {
+                    "product": product
+                }
+            });
+            Ok(Json(product_response))
             }
-            Err(err) => {
-                // Потрібно буде знайти як правильно обробити помилку
-                // при видаленні в sqlite, та підправити ф-ю
-                // if err.to_string().contains("UNIQUE constraint failed") {
-                //     let error_response = json!({
-                //         "status": "error",
-                //         "message": "Помилка при видаленні товару",
-                //     });
-                //     return Err((StatusCode::CONFLICT, Json(error_response)));
-                // }
-                let error_response = json!({
-                    "status": "error",
-                    "message": format!("Помилка БД: {:?}", err)
-                });
-                Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
-            }
+        Err(sqlx::Error::RowNotFound) => {
+            let error_response = json!({
+                "status": "error",
+                "message": format!("Товар з ID: {} не знайдено", id)
+            });
+            Err((StatusCode::NOT_FOUND, Json(error_response)))
         }
+        Err(err) => {
+            let error_response = json!({
+                "status": "error",
+                "message": format!("Помилка бази даних: {:?}", err)
+            });
+            Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
+        }
+    }
 }
 
 pub async fn update_product(State(state): State<AppState>,

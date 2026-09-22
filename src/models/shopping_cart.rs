@@ -1,9 +1,9 @@
 use serde::{Deserialize, Serialize};
 // схеми
 #[derive(Serialize, Debug, sqlx::FromRow)]
-pub struct OrderItems {
+pub struct ShoppingCart {
     pub user_id: i64,
-    pub order_id: i64,
-    pub quantity: i64,
-    pub price_at_purchase: i64
+    pub product_id: i64,
+    pub amount: i64,
+    pub created_at: Option<String>
 }
