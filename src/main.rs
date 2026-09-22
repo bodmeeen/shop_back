@@ -1,15 +1,15 @@
-use axum::routing::{delete, post};
-use axum::{routing::get, Router, extract::State};
+
+use axum::{routing::{get, delete, post, patch}, Router};
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
 
 mod db;
-mod routes;
+mod handlers;
 mod models;
-use routes::handlers::hello_shop;
-use routes::handlers::{get_products, create_product};
+use handlers::product_h::hello_shop;
+use handlers::product_h::{get_products, create_product};
 
-use crate::routes::handlers::delete_product;
+use crate::handlers::product_h::{delete_product, update_product};
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -50,6 +50,7 @@ async fn main() {
         .route("/api/products", get(get_products))
         .route("/api/products", post(create_product))
         .route("/api/products/:id", delete(delete_product))
+        .route("/api/products/:id", patch(update_product))
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();

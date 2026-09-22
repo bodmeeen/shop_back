@@ -1,5 +1,5 @@
-use axum::{Json, body, extract::{Path, State}, http::StatusCode, response::IntoResponse};
-use crate::{AppState, models::product::{self, CreateProductSchema, Product}};
+use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
+use crate::{AppState, models::product::{Product, CreateProductSchema, UpdateProductSchema}};
 use serde_json::json;
 
 
@@ -28,7 +28,7 @@ pub async fn create_product(State(state): State<AppState>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     
     
-    let product = sqlx::query_as::<_, Product>(
+    let result = sqlx::query_as::<_, Product>(
         r#"INSERT INTO products (title, body, old_price, price, status) 
         VALUES ($1, $2, $3, $4, $5)
         RETURNING *"#,
@@ -41,7 +41,7 @@ pub async fn create_product(State(state): State<AppState>,
         .fetch_one(&state.db)
         .await;
 
-        match product {
+        match result {
             Ok(product) => {
                 let product_response = json!({
                     "status": "success",
@@ -73,9 +73,8 @@ pub async fn delete_product(State(state): State<AppState>,
         Path(id): Path<i64>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     
-    let result = sqlx::query_as::<_, Product>(
-        r#"DELETE FROM products WHERE id = $1 RETURNING *"#,
-        )
+    let result = sqlx::query_as::<_, Product> (
+        r#"DELETE FROM products WHERE id = $1 RETURNING *"#)
         .bind(&id)
         .fetch_one(&state.db)
         .await;
@@ -107,4 +106,73 @@ pub async fn delete_product(State(state): State<AppState>,
                 Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
             }
         }
+}
+
+pub async fn update_product(State(state): State<AppState>,
+        Path(id): Path<i64>,
+        Json(payload): Json<UpdateProductSchema>,
+        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+        
+    let query_result = sqlx::query_as::<_, Product> (
+        r#"SELECT * FROM products WHERE id = $1"#/*, &id*/)
+            .bind(&id)
+            .fetch_one(&state.db)
+            .await;
+        
+    let existing_product = match query_result {
+        Ok(product) => product,
+        Err(sqlx::Error::RowNotFound) => {
+            let error_response = serde_json::json!({
+                "status": "error",
+                "message": format!("Товар з ID: {} не знайдено", id)
+            });
+            return Err((StatusCode::NOT_FOUND, Json(error_response)));
+        }
+        Err(err) => {
+            return Err((
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "status": "error",
+                    "message": format!("Помила БД{:?}",err)
+                })),
+            ));
+        }
+    };
+
+    let new_title = payload.title.as_ref().unwrap_or(&existing_product.title);
+    let new_body = payload.body.as_ref().unwrap_or(&existing_product.body);
+    // let new_old_price = payload.old_price.unwrap_or(existing_product.old_price);
+    let new_price = payload.price.unwrap_or(existing_product.price);
+    let new_status = payload.status.as_ref().unwrap_or(&existing_product.status);
+
+    let updated_product = sqlx::query_as::<_, Product> (
+        r#"UPDATE products SET title = $1, body = $2, price = $3, status = $4 WHERE id = $5 RETURNING *"#)
+        .bind(new_title)
+        .bind(new_body)
+        // .bind(new_old_price)
+        .bind(new_price)
+        .bind(new_status)
+        .bind(&id)
+        .fetch_one(&state.db)
+        .await
+
+        .map_err(|err| {
+            (
+            StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "status": "error",
+                    "message": format!("Помилка запиту :{:?}", err)
+                })),
+            )
+        })?;
+
+        let response = json!({
+            "status": "success",
+            "data": json!({
+                "product": updated_product
+            })
+        });
+
+        Ok(Json(response))
+
 }
