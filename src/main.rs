@@ -1,7 +1,9 @@
-
-use axum::{routing::{get, delete, post, patch}, Router};
+use axum::{routing::{get, delete, post, patch}, Router, http::Method};
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
+
+use tower_http::cors::{Any, CorsLayer};
+
 
 mod db;
 mod handlers;
@@ -45,12 +47,22 @@ async fn main() {
 
     let state = AppState { db: pool.clone() };
 
+    // Шар CORS
+    let cors = CorsLayer::new()
+        // Дозволити запити з будь-яких адрес
+        .allow_origin(Any)
+        // Дозволити ці методи
+        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
+        // Дозволити будь-які заголовки
+        .allow_headers(Any);
+
     let app = Router::new()
         .route("/", get(hello_shop))
         .route("/api/products", get(get_products))
         .route("/api/products", post(create_product))
         .route("/api/products/:id", delete(delete_product))
         .route("/api/products/:id", patch(update_product))
+        .layer(cors)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();

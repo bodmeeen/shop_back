@@ -99,7 +99,7 @@ pub async fn delete_product(State(state): State<AppState>,
         Err(err) => {
             let error_response = json!({
                 "status": "error",
-                "message": format!("Помилка бази даних: {:?}", err)
+                "message": format!("Помилка БД: {:?}", err)
             });
             Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
         }
@@ -131,7 +131,7 @@ pub async fn update_product(State(state): State<AppState>,
                 StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({
                     "status": "error",
-                    "message": format!("Помила БД{:?}",err)
+                    "message": format!("Помилка БД: {:?}",err)
                 })),
             ));
         }
@@ -159,7 +159,7 @@ pub async fn update_product(State(state): State<AppState>,
             StatusCode::INTERNAL_SERVER_ERROR,
                 Json(json!({
                     "status": "error",
-                    "message": format!("Помилка запиту :{:?}", err)
+                    "message": format!("Помилка БД: {:?}", err)
                 })),
             )
         })?;
