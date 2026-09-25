@@ -4,10 +4,12 @@ use serde::{Deserialize, Serialize};
 pub struct Product {
     pub id: i64, // В майбутньому можна буде замінити на UUID
     pub title: String,
+    pub category_id: i64,
     pub body: String,
     pub old_price: Option<i64>, // Option, бо може бути NULL
     pub price: i64,
     pub status: String,
+    pub is_active: bool,
     // потрібно буде дізнатись як правильно тут зробити created_at
     pub created_at: Option<String>,
     // Це можна буде повернути коли потрібно буде в беку
@@ -18,6 +20,7 @@ pub struct Product {
 #[derive(Deserialize)]
 pub struct CreateProductSchema {
     pub title: String,
+    pub category_id: i64,
     pub body: String,
     pub old_price: Option<i64>, // Option, бо може бути NULL
     pub price: i64,

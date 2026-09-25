@@ -5,13 +5,12 @@ use sqlx::SqlitePool;
 use tower_http::cors::{Any, CorsLayer};
 
 
-mod db;
 mod handlers;
 mod models;
 use handlers::product_h::hello_shop;
 use handlers::product_h::{get_products, create_product};
 
-use crate::handlers::product_h::{delete_product, update_product};
+use crate::handlers::{categories_h::{create_category, get_categories}, product_h::{delete_product, update_product}};
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -43,7 +42,7 @@ async fn main() {
         }
     };
 
-    db::seeding::setup_database(&pool).await;
+    // db::seeding::setup_database(&pool).await;
 
     let state = AppState { db: pool.clone() };
 
@@ -62,6 +61,9 @@ async fn main() {
         .route("/api/products", post(create_product))
         .route("/api/products/:id", delete(delete_product))
         .route("/api/products/:id", patch(update_product))
+
+        .route("/api/categories", get(get_categories))
+        .route("/api/categories", post(create_category))
         .layer(cors)
         .with_state(state);
 

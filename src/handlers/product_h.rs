@@ -29,11 +29,12 @@ pub async fn create_product(State(state): State<AppState>,
     
     
     let result = sqlx::query_as::<_, Product>(
-        r#"INSERT INTO products (title, body, old_price, price, status) 
-        VALUES ($1, $2, $3, $4, $5)
+        r#"INSERT INTO products (title,category_id, body, old_price, price, status) 
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *"#,
         )
         .bind(&payload.title)
+        .bind(&payload.category_id)
         .bind(&payload.body)
         .bind(&payload.old_price)
         .bind(&payload.price)
