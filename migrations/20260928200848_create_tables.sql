@@ -10,23 +10,15 @@ CREATE TABLE users (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE categories (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    title TEXT NOT NULL,
-    image_url TEXT
-);
-
 CREATE TABLE products (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    category_id INTEGER NOT NULL,
     body TEXT,
     old_price INTEGER,
     price INTEGER NOT NULL,
     status TEXT,
     is_active BOOLEAN DEFAULT 1,    
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE product_images (

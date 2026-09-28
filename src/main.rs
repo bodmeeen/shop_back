@@ -10,7 +10,7 @@ mod models;
 use handlers::product_h::hello_shop;
 use handlers::product_h::{get_products, create_product};
 
-use crate::handlers::{categories_h::{create_category, get_categories}, product_h::{delete_product, update_product}};
+use crate::handlers::{product_h::{delete_product, update_product}};
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -62,29 +62,13 @@ async fn main() {
         .route("/api/products/:id", delete(delete_product))
         .route("/api/products/:id", patch(update_product))
 
-        .route("/api/categories", get(get_categories))
-        .route("/api/categories", post(create_category))
         .layer(cors)
         .with_state(state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
     println!("Сервер запущений за адресою: http://localhost:3000");
 
+    // serve це безкінечний цикл, сервер працює поки не перервати 
+    // його роботу через термінал
     axum::serve(listener, app).await.unwrap();
 }
-
-//     // Роутер; якщо користувач зайшов на головну сторінку, то для
-//     // нього виконується ф-я hello_shop
-//     let app = Router::new()
-//         .route("/", get(hello_shop));
-
-//     // Підключення до порту 3000 локально
-//     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
-
-//     println!("Сервер запущений за адресою: http://localhost:3000");
-
-//     // serve це безкінечний цикл, сервер працює поки не перервати 
-//     // його роботу через термінал
-//     axum::serve(listener, app).await.unwrap();
-// }
-
