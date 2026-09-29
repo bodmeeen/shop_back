@@ -4,10 +4,6 @@ use serde_json::json;
 
 
 // Хендлер (обробник запиту). Звичайна ф-я яка повертає текст
-pub async fn hello_shop() -> &'static str {
-    "Бд підключена"
-}
-
 
 pub async fn get_products(State(state): State<AppState>) -> Json<Vec<Product>> {
     // Запит до бази

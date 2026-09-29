@@ -7,10 +7,8 @@ use tower_http::cors::{Any, CorsLayer};
 
 mod handlers;
 mod models;
-use handlers::product_h::hello_shop;
-use handlers::product_h::{get_products, create_product};
-
-use crate::handlers::{product_h::{delete_product, update_product}};
+use handlers::product_h::{get_products, create_product, delete_product, update_product};
+use handlers::users_h::{get_users, create_user, delete_user};
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -56,11 +54,15 @@ async fn main() {
         .allow_headers(Any);
 
     let app = Router::new()
-        .route("/", get(hello_shop))
         .route("/api/products", get(get_products))
         .route("/api/products", post(create_product))
         .route("/api/products/:id", delete(delete_product))
         .route("/api/products/:id", patch(update_product))
+
+        .route("/api/users", get(get_users))
+        .route("/api/users", post(create_user))
+        .route("/api/users/:id", delete(delete_user))
+        
 
         .layer(cors)
         .with_state(state);
