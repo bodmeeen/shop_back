@@ -9,6 +9,8 @@ mod handlers;
 mod models;
 use handlers::product_h::{get_products, create_product, delete_product, update_product};
 use handlers::users_h::{get_users, create_user, delete_user};
+use handlers::admin_orders_h::{get_orders};
+use handlers::public_orders_h::{create_order, get_order_by_id};
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -62,7 +64,11 @@ async fn main() {
         .route("/api/users", get(get_users))
         .route("/api/users", post(create_user))
         .route("/api/users/:id", delete(delete_user))
-        
+
+        .route("/api/admin_orders", get(get_orders)) 
+
+        .route("/api/orders", post(create_order).get(get_order_by_id)) 
+        .route("/api/orders/:id", get(get_order_by_id))
 
         .layer(cors)
         .with_state(state);

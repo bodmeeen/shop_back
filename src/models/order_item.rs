@@ -1,9 +1,0 @@
-use serde::{Deserialize, Serialize};
-// схеми
-#[derive(Serialize, Debug, sqlx::FromRow)]
-pub struct OrderItems {
-    pub user_id: i64,
-    pub order_id: i64,
-    pub quantity: i64,
-    pub price_at_purchase: i64
-}
