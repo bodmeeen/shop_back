@@ -14,7 +14,13 @@ pub struct Product {
     // Це можна буде повернути коли потрібно буде в беку
     // робити якісь дії з датою, порівняння дат і тд.
     // pub created_at: Option<chrono::DateTime<chrono::Utc>>,
+
+    // #[sqlx(default)]    
+    // pub images: Vec<String>,    // для масиву посилань на картинки товару
 }
+
+// #[derive(Serialize, Debug, sqlx::FromRow)]
+// pub struct GetProductByID
 
 #[derive(Deserialize)]
 pub struct CreateProductSchema {

@@ -1,5 +1,5 @@
 use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::products::{Product, CreateProductSchema, UpdateProductSchema}};
+use crate::{AppState, models::products::{Product, CreateProductSchema}};
 use serde_json::json;
 
 
@@ -11,6 +11,21 @@ pub async fn get_products(State(state): State<AppState>) -> Json<Vec<Product>> {
         "SELECT * FROM products"
     )
     .fetch_all(&state.db) // Виконання запиту через пул з'єднань
+    .await
+    // .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
+    .unwrap(); // Поки звичайни для нормального виведення помилок
+    Json(products)
+}
+
+pub async fn get_product_by_id(State(state): State<AppState>,
+        Path(id): Path<i64>,
+        ) -> Json<Product> {
+    
+    let products = sqlx::query_as(
+        "SELECT * FROM products WHERE id = $1"
+    )
+    .bind(&id)
+    .fetch_one(&state.db) // Виконання запиту через пул з'єднань
     .await
     // .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
     .unwrap(); // Поки звичайни для нормального виведення помилок
@@ -64,88 +79,13 @@ pub async fn create_product(State(state): State<AppState>,
         }
 }
 
-
-pub async fn delete_product(State(state): State<AppState>,
+    // Ф-я для зміни статусу замовлення на "немає в наявності" або інш.
+pub async fn soft_delete_product (State(state): State<AppState>,
         Path(id): Path<i64>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    
-    let result = sqlx::query_as::<_, Product> (
-        r#"DELETE FROM products WHERE id = $1 RETURNING *"#)
-        .bind(&id)
-        .fetch_one(&state.db)
-        .await;
-
-        match result {
-            Ok(product) => {
-            let product_response = json!({
-                "status": "success",
-                "data": {
-                    "product": product
-                }
-            });
-            Ok(Json(product_response))
-            }
-        Err(sqlx::Error::RowNotFound) => {
-            let error_response = json!({
-                "status": "error",
-                "message": format!("Товар з ID: {} не знайдено", id)
-            });
-            Err((StatusCode::NOT_FOUND, Json(error_response)))
-        }
-        Err(err) => {
-            let error_response = json!({
-                "status": "error",
-                "message": format!("Помилка БД: {:?}", err)
-            });
-            Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
-        }
-    }
-}
-
-pub async fn update_product(State(state): State<AppState>,
-        Path(id): Path<i64>,
-        Json(payload): Json<UpdateProductSchema>,
-        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-        
-    let query_result = sqlx::query_as::<_, Product> (
-        r#"SELECT * FROM products WHERE id = $1"#/*, &id*/)
-            .bind(&id)
-            .fetch_one(&state.db)
-            .await;
-        
-    let existing_product = match query_result {
-        Ok(product) => product,
-        Err(sqlx::Error::RowNotFound) => {
-            let error_response = serde_json::json!({
-                "status": "error",
-                "message": format!("Товар з ID: {} не знайдено", id)
-            });
-            return Err((StatusCode::NOT_FOUND, Json(error_response)));
-        }
-        Err(err) => {
-            return Err((
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(json!({
-                    "status": "error",
-                    "message": format!("Помилка БД: {:?}",err)
-                })),
-            ));
-        }
-    };
-
-    let new_title = payload.title.as_ref().unwrap_or(&existing_product.title);
-    let new_body = payload.body.as_ref().unwrap_or(&existing_product.body);
-    // let new_old_price = payload.old_price.unwrap_or(existing_product.old_price);
-    let new_price = payload.price.unwrap_or(existing_product.price);
-    let new_status = payload.status.as_ref().unwrap_or(&existing_product.status);
 
     let updated_product = sqlx::query_as::<_, Product> (
-        r#"UPDATE products SET title = $1, body = $2, price = $3, status = $4 WHERE id = $5 RETURNING *"#)
-        .bind(new_title)
-        .bind(new_body)
-        // .bind(new_old_price)
-        .bind(new_price)
-        .bind(new_status)
+        r#"UPDATE products SET status = 'немає в наявності' WHERE id = $1 RETURNING *"#)
         .bind(&id)
         .fetch_one(&state.db)
         .await
@@ -166,7 +106,145 @@ pub async fn update_product(State(state): State<AppState>,
                 "product": updated_product
             })
         });
-
         Ok(Json(response))
-
 }
+
+
+    // Зміна статусу замовлення на "в наявності"
+pub async fn restore_product (State(state): State<AppState>,
+        Path(id): Path<i64>,
+        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+
+    let updated_product = sqlx::query_as::<_, Product> (
+        r#"UPDATE products SET status = 'в наявності' WHERE id = $1 RETURNING *"#)
+        .bind(&id)
+        .fetch_one(&state.db)
+        .await
+
+        .map_err(|err| {
+            (
+            StatusCode::INTERNAL_SERVER_ERROR,
+                Json(json!({
+                    "status": "error",
+                    "message": format!("Помилка БД: {:?}", err)
+                })),
+            )
+        })?;
+
+        let response = json!({
+            "status": "success",
+            "data": json!({
+                "product": updated_product
+            })
+        });
+        Ok(Json(response))
+    }
+
+
+    // Ф-я для повного видалення продукту з БД
+// pub async fn delete_product(State(state): State<AppState>,
+//         Path(id): Path<i64>,
+//         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    
+//     let result = sqlx::query_as::<_, Product> (
+//         r#"DELETE FROM products WHERE id = $1 RETURNING *"#)
+//         .bind(&id)
+//         .fetch_one(&state.db)
+//         .await;
+
+//         match result {
+//             Ok(product) => {
+//             let product_response = json!({
+//                 "status": "success",
+//                 "data": {
+//                     "product": product
+//                 }
+//             });
+//             Ok(Json(product_response))
+//             }
+//         Err(sqlx::Error::RowNotFound) => {
+//             let error_response = json!({
+//                 "status": "error",
+//                 "message": format!("Товар з ID: {} не знайдено", id)
+//             });
+//             Err((StatusCode::NOT_FOUND, Json(error_response)))
+//         }
+//         Err(err) => {
+//             let error_response = json!({
+//                 "status": "error",
+//                 "message": format!("Помилка БД: {:?}", err)
+//             });
+//             Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
+//         }
+//     }
+// }
+
+
+// pub async fn update_product(State(state): State<AppState>,
+//         Path(id): Path<i64>,
+//         Json(payload): Json<UpdateProductSchema>,
+//         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+        
+//     let query_result = sqlx::query_as::<_, Product> (
+//         r#"SELECT * FROM products WHERE id = $1"#/*, &id*/)
+//             .bind(&id)
+//             .fetch_one(&state.db)
+//             .await;
+        
+//     let existing_product = match query_result {
+//         Ok(product) => product,
+//         Err(sqlx::Error::RowNotFound) => {
+//             let error_response = serde_json::json!({
+//                 "status": "error",
+//                 "message": format!("Товар з ID: {} не знайдено", id)
+//             });
+//             return Err((StatusCode::NOT_FOUND, Json(error_response)));
+//         }
+//         Err(err) => {
+//             return Err((
+//                 StatusCode::INTERNAL_SERVER_ERROR,
+//                 Json(json!({
+//                     "status": "error",
+//                     "message": format!("Помилка БД: {:?}",err)
+//                 })),
+//             ));
+//         }
+//     };
+
+//     let new_title = payload.title.as_ref().unwrap_or(&existing_product.title);
+//     let new_body = payload.body.as_ref().unwrap_or(&existing_product.body);
+//     // let new_old_price = payload.old_price.unwrap_or(existing_product.old_price);
+//     let new_price = payload.price.unwrap_or(existing_product.price);
+//     let new_status = payload.status.as_ref().unwrap_or(&existing_product.status);
+
+//     let updated_product = sqlx::query_as::<_, Product> (
+//         r#"UPDATE products SET title = $1, body = $2, price = $3, status = $4 WHERE id = $5 RETURNING *"#)
+//         .bind(new_title)
+//         .bind(new_body)
+//         // .bind(new_old_price)
+//         .bind(new_price)
+//         .bind(new_status)
+//         .bind(&id)
+//         .fetch_one(&state.db)
+//         .await
+
+//         .map_err(|err| {
+//             (
+//             StatusCode::INTERNAL_SERVER_ERROR,
+//                 Json(json!({
+//                     "status": "error",
+//                     "message": format!("Помилка БД: {:?}", err)
+//                 })),
+//             )
+//         })?;
+
+//         let response = json!({
+//             "status": "success",
+//             "data": json!({
+//                 "product": updated_product
+//             })
+//         });
+
+//         Ok(Json(response))
+
+// }

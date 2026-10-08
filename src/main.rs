@@ -7,7 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 mod handlers;
 mod models;
-use handlers::product_h::{get_products, create_product, delete_product, update_product};
+use handlers::product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product};
 use handlers::users_h::{get_users, create_user, delete_user};
 use handlers::admin_orders_h::{get_orders};
 use handlers::public_orders_h::{create_order, get_order_by_id};
@@ -42,8 +42,6 @@ async fn main() {
         }
     };
 
-    // db::seeding::setup_database(&pool).await;
-
     let state = AppState { db: pool.clone() };
 
     // Шар CORS
@@ -51,15 +49,19 @@ async fn main() {
         // Дозволити запити з будь-яких адрес
         .allow_origin(Any)
         // Дозволити ці методи
-        .allow_methods([Method::GET, Method::POST, Method::PATCH, Method::DELETE])
+        .allow_methods([Method::GET, Method::POST, Method:: PUT, Method::PATCH, Method::DELETE])
         // Дозволити будь-які заголовки
         .allow_headers(Any);
 
     let app = Router::new()
         .route("/api/products", get(get_products))
         .route("/api/products", post(create_product))
-        .route("/api/products/:id", delete(delete_product))
-        .route("/api/products/:id", patch(update_product))
+        .route("/api/products/:id/archive", patch(soft_delete_product))
+        .route("/api/products/:id/restore", patch(restore_product))
+        // .route("/api/products/:id", patch(update_product))
+
+
+        .route("/api/get_product_by_id/:id", get(get_product_by_id))
 
         .route("/api/users", get(get_users))
         .route("/api/users", post(create_user))
