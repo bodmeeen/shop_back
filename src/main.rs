@@ -7,6 +7,7 @@ use tower_http::cors::{Any, CorsLayer};
 
 mod handlers;
 mod models;
+mod telegram;
 use handlers::product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product};
 use handlers::categories_h::{get_categories, create_category};
 use handlers::users_h::{get_users, create_user, delete_user};

@@ -1,5 +1,5 @@
 use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::orders::{CreateOrderRequest, Order, OrderItem}};
+use crate::{AppState, models::orders::{CreateOrderRequest, Order, OrderItem}, telegram::send_telegram_notification};
 use serde_json::json;
 
 // приймає дані, відкриває транзакцію, зберігає клієнта та товари, підтвердження
@@ -69,6 +69,17 @@ pub async fn create_order (State(state): State<AppState>,
         });
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
+
+        // Телеграм бот
+    let text = format!(
+            " <b>Нове замовлення!</b>\nІм'я: {} {}\nСума: {} грн\nТелефон: {}", 
+            payload.customer_first_name, 
+            payload.customer_last_name, 
+            payload.total_price / 100, 
+            payload.customer_phone
+        );
+
+    send_telegram_notification(&text).await;
 
 
     let success_response = json!({
