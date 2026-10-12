@@ -8,9 +8,12 @@ use tower_http::cors::{Any, CorsLayer};
 mod handlers;
 mod models;
 use handlers::product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product};
+use handlers::categories_h::{get_categories, create_category};
 use handlers::users_h::{get_users, create_user, delete_user};
 use handlers::admin_orders_h::{get_orders};
 use handlers::public_orders_h::{create_order, get_order_by_id};
+
+use crate::handlers::categories_h::get_category_by_id;
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -58,10 +61,13 @@ async fn main() {
         .route("/api/products", post(create_product))
         .route("/api/products/:id/archive", patch(soft_delete_product))
         .route("/api/products/:id/restore", patch(restore_product))
-        // .route("/api/products/:id", patch(update_product))
-
 
         .route("/api/get_product_by_id/:id", get(get_product_by_id))
+        // .route("/api/products/:id", patch(update_product))
+
+        .route("/api/categories", get(get_categories))
+        .route("/api/categories", post(create_category))
+        .route("/api/category_by_id/:id", get(get_category_by_id))
 
         .route("/api/users", get(get_users))
         .route("/api/users", post(create_user))

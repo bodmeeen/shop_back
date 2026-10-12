@@ -17,22 +17,6 @@ pub async fn get_products(State(state): State<AppState>) -> Json<Vec<Product>> {
     Json(products)
 }
 
-pub async fn get_product_by_id(State(state): State<AppState>,
-        Path(id): Path<i64>,
-        ) -> Json<Product> {
-    
-    let products = sqlx::query_as(
-        "SELECT * FROM products WHERE id = $1"
-    )
-    .bind(&id)
-    .fetch_one(&state.db) // Виконання запиту через пул з'єднань
-    .await
-    // .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
-    .unwrap(); // Поки звичайни для нормального виведення помилок
-    Json(products)
-}
-
-
 pub async fn create_product(State(state): State<AppState>,
         // отримання даних від користувача в payload
         Json(payload): Json<CreateProductSchema>,
@@ -40,11 +24,12 @@ pub async fn create_product(State(state): State<AppState>,
     
     
     let result = sqlx::query_as::<_, Product>(
-        r#"INSERT INTO products (title, body, old_price, price, status) 
-        VALUES ($1, $2, $3, $4, $5)
+        r#"INSERT INTO products (title, category_id, body, old_price, price, status) 
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *"#,
         )
         .bind(&payload.title)
+        .bind(&payload.category_id)
         .bind(&payload.body)
         .bind(&payload.old_price)
         .bind(&payload.price)
@@ -78,6 +63,7 @@ pub async fn create_product(State(state): State<AppState>,
             }
         }
 }
+
 
     // Ф-я для зміни статусу замовлення на "немає в наявності" або інш.
 pub async fn soft_delete_product (State(state): State<AppState>,
@@ -140,6 +126,21 @@ pub async fn restore_product (State(state): State<AppState>,
         Ok(Json(response))
     }
 
+
+pub async fn get_product_by_id(State(state): State<AppState>,
+        Path(id): Path<i64>,
+        ) -> Json<Product> {
+    
+    let products = sqlx::query_as(
+        "SELECT * FROM products WHERE id = $1"
+    )
+    .bind(&id)
+    .fetch_one(&state.db) // Виконання запиту через пул з'єднань
+    .await
+    // .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
+    .unwrap(); // Поки звичайни для нормального виведення помилок
+    Json(products)
+}
 
     // Ф-я для повного видалення продукту з БД
 // pub async fn delete_product(State(state): State<AppState>,
