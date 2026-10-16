@@ -142,7 +142,7 @@ pub async fn get_product_by_id(State(state): State<AppState>,
     Json(products)
 }
 
-    // Ф-я для повного видалення продукту з БД
+    // Ф-я для повного видалення товару з БД
 // pub async fn delete_product(State(state): State<AppState>,
 //         Path(id): Path<i64>,
 //         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {

@@ -10,9 +10,11 @@ mod models;
 mod telegram;
 use handlers::product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product};
 use handlers::categories_h::{get_categories, create_category};
-use handlers::users_h::{get_users, create_user, delete_user};
-use handlers::admin_orders_h::{get_orders};
+use handlers::admin::admin_users_h::{get_users, create_user, delete_user};
+use handlers::admin::admin_orders_h::{get_orders};
 use handlers::public_orders_h::{create_order, get_order_by_id};
+
+use handlers::users_h::{create_user_hash};
 
 use crate::handlers::categories_h::get_category_by_id;
 
@@ -64,15 +66,20 @@ async fn main() {
         .route("/api/products/:id/restore", patch(restore_product))
 
         .route("/api/get_product_by_id/:id", get(get_product_by_id))
+
         // .route("/api/products/:id", patch(update_product))
 
         .route("/api/categories", get(get_categories))
         .route("/api/categories", post(create_category))
         .route("/api/category_by_id/:id", get(get_category_by_id))
 
+        // Адмінське
         .route("/api/users", get(get_users))
         .route("/api/users", post(create_user))
         .route("/api/users/:id", delete(delete_user))
+
+        .route("/api/users_reg", post(create_user_hash))
+
 
         .route("/api/admin_orders", get(get_orders)) 
 

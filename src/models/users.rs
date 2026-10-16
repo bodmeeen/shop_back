@@ -5,7 +5,7 @@ pub struct User {
     pub id: i64,
     pub first_name: String,
     pub last_name: String,
-    pub role: String,
+    pub role: Option<String>,
     pub email: String,
     pub password_hash: String,
     pub phone_number: String,
@@ -22,4 +22,14 @@ pub struct CreateUserSchema {
     pub phone_number: String,
 }
 
-// #[derive(Serialize, Deserialize, Debug)]
+// Схема для отримання даних при реєстрації користувача,
+// а особливо нехешований пароль
+#[derive(Deserialize)]
+pub struct CreateUserPassSchema {
+    pub first_name: String,
+    pub last_name: String,
+    pub role: String,
+    pub email: String,
+    pub password: String,
+    pub phone_number: String,
+}
