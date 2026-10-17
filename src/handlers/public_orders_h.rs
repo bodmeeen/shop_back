@@ -72,11 +72,12 @@ pub async fn create_order (State(state): State<AppState>,
 
         // Телеграм бот
     let text = format!(
-            " <b>Нове замовлення!</b>\nІм'я: {} {}\nСума: {} грн\nТелефон: {}", 
+            " <b>Нове замовлення!</b>\nІм'я: {} {}\nСума: {} грн\nТелефон: {} \nДані для доставки: {}", 
             payload.customer_first_name, 
             payload.customer_last_name, 
             payload.total_price / 100, 
-            payload.customer_phone
+            payload.customer_phone,
+            payload.delivery_info
         );
 
     send_telegram_notification(&text).await;

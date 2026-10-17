@@ -1,3 +1,5 @@
+use std::intrinsics::log10f128;
+
 use axum::{routing::{get, delete, post, patch}, Router, http::Method};
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
@@ -16,7 +18,7 @@ use handlers::public_orders_h::{create_order, get_order_by_id};
 
 use handlers::users_h::{create_user_hash};
 
-use crate::handlers::categories_h::get_category_by_id;
+use crate::handlers::{categories_h::get_category_by_id, users_h::login_user};
 
 #[derive(Clone)]
 // SqlitePool працює як Arc, тож його не потрібно
@@ -79,8 +81,13 @@ async fn main() {
         .route("/api/users/:id", delete(delete_user))
 
         .route("/api/users_reg", post(create_user_hash))
+        
+        
+        // ''''''''''''''''''''''''''''''
+        .route("/api/users_login", post(login_user))
 
 
+        
         .route("/api/admin_orders", get(get_orders)) 
 
         .route("/api/orders", post(create_order).get(get_order_by_id)) 

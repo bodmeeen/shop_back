@@ -1,38 +1,32 @@
 use axum::{Json, extract::{State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::users::{User, CreateUserPassSchema}};
+use sqlx::error;
+use crate::{AppState, models::users::{LoginUserSchema, RegisterUserSchema, User}};
 use serde_json::json;
 use argon2::{
-    password_hash::{PasswordHasher},
-    Argon2
+    Argon2, PasswordHash, PasswordVerifier, password_hash::PasswordHasher
 };
 
 pub async fn create_user_hash(State(state): State<AppState>,
-        Json(payload): Json<CreateUserPassSchema>,
+        Json(payload): Json<RegisterUserSchema>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
 
+
+        // Створення хешованого пароля при реєстрації
     let argon2 = Argon2::default();
 
     let hashed_password = argon2.hash_password(payload.password.as_bytes())
         .expect("Помилка хешування пароля")
         .to_string();
 
-
-    // Це для логіну; Розпарсити хеш та порівняти з ним пароль; 
-    // assert! потрібно буде видалити бо він крашить все 
-    // let parsed_hash = PasswordHash::new(&password_hash)?;
-    // assert!(Argon2::default().verify_password(password, &parsed_hash).is_ok());
-
     let result = sqlx::query_as::<_, User>(
-        r#"INSERT INTO users (first_name, last_name, role, email, password_hash, phone_number) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        r#"INSERT INTO users (first_name, email, password_hash, role) 
+        VALUES ($1, $2, $3, $4)
         RETURNING *"#,
         )
         .bind(&payload.first_name)
-        .bind(&payload.last_name)
-        .bind(&payload.role)
         .bind(&payload.email)
         .bind(&hashed_password)
-        .bind(&payload.phone_number)
+        .bind("user")
         .fetch_one(&state.db)
         .await;
 
@@ -61,4 +55,67 @@ pub async fn create_user_hash(State(state): State<AppState>,
                 Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
             }
         }
+}
+
+
+pub async fn login_user(State(state): State<AppState>,
+    Json(payload): Json<LoginUserSchema>,
+    ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+
+    let get_user_by_email = sqlx::query_as::<_, User>(
+        "SELECT * FROM users WHERE email = $1"
+    )
+    .bind(&payload.email)
+    .fetch_one(&state.db)
+    .await
+    .map_err(|err| {
+        if let sqlx::Error::RowNotFound = err {
+            let error_response = json!({
+                "status": "error",
+                "message": "email або пароль невірний"
+            });
+            return (StatusCode::NOT_FOUND, Json(error_response));
+        }
+        
+        let error_response = json!({
+            "status": "error",
+            "message": format!("Помилка БД при пошуку емейлу користувача: {:?}", err)
+        });
+        (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+    })?;
+
+
+    // Парсинг хешу для витягнення солі та налаштувань
+    let parsed_hash = PasswordHash::new(&get_user_by_email.password_hash)
+        .map_err(|_| {
+            let error_response = json!({
+                "status": "error",
+                "message": "Помилка сервера при перервірці хешу"
+            });
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+        })?;
+
+
+    // Порівняння хешу пароля з фронта з хешованим паролем з БД
+    let is_valid = Argon2::default()
+        .verify_password(payload.password.as_bytes(), &parsed_hash)
+        .is_ok();
+
+    if !is_valid {
+        let error_response = json!({
+            "status": "error",
+            "message": "Невірний email або пароль"
+        });
+        return Err((StatusCode::UNAUTHORIZED, Json(error_response)))
+    }
+
+
+        let success_response = json!({
+        "status": "success",
+        "data": {
+            "isValid" : "yes"
+        }
+    });
+
+    Ok(Json(success_response))
 }

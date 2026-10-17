@@ -1,5 +1,5 @@
 use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::users::{User, CreateUserSchema, /*UpdateUserSchema*/}};
+use crate::{AppState, models::users::{User, CreateUserSchema}};
 use serde_json::json;
 
 pub async fn get_users(State(state): State<AppState>) -> Json<Vec<User>> {
