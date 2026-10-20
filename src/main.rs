@@ -1,5 +1,3 @@
-use std::intrinsics::log10f128;
-
 use axum::{routing::{get, delete, post, patch}, Router, http::Method};
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
@@ -16,7 +14,7 @@ use handlers::admin::admin_users_h::{get_users, create_user, delete_user};
 use handlers::admin::admin_orders_h::{get_orders};
 use handlers::public_orders_h::{create_order, get_order_by_id};
 
-use handlers::users_h::{create_user_hash};
+use handlers::users_h::{registration_user};
 
 use crate::handlers::{categories_h::get_category_by_id, users_h::login_user};
 
@@ -52,7 +50,7 @@ async fn main() {
 
     let state = AppState { db: pool.clone() };
 
-    // Шар CORS
+    // Шар CORS; Потрібно буде змінити з Any
     let cors = CorsLayer::new()
         // Дозволити запити з будь-яких адрес
         .allow_origin(Any)
@@ -80,15 +78,15 @@ async fn main() {
         .route("/api/users", post(create_user))
         .route("/api/users/:id", delete(delete_user))
 
-        .route("/api/users_reg", post(create_user_hash))
+        .route("/api/users_reg", post(registration_user))
         
         
         // ''''''''''''''''''''''''''''''
         .route("/api/users_login", post(login_user))
 
 
-        
         .route("/api/admin_orders", get(get_orders)) 
+        
 
         .route("/api/orders", post(create_order).get(get_order_by_id)) 
         .route("/api/orders/:id", get(get_order_by_id))

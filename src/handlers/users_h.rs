@@ -1,12 +1,14 @@
 use axum::{Json, extract::{State}, http::StatusCode, response::{IntoResponse}};
-use sqlx::error;
-use crate::{AppState, models::users::{LoginUserSchema, RegisterUserSchema, User}};
+use crate::{AppState, models::users::{LoginUserSchema, RegisterUserSchema, User, Claims}};
 use serde_json::json;
 use argon2::{
     Argon2, PasswordHash, PasswordVerifier, password_hash::PasswordHasher
 };
+use jsonwebtoken::{encode, Header, EncodingKey};
+use chrono::{Duration, Utc};
 
-pub async fn create_user_hash(State(state): State<AppState>,
+
+pub async fn registration_user(State(state): State<AppState>,
         Json(payload): Json<RegisterUserSchema>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
 
@@ -30,31 +32,43 @@ pub async fn create_user_hash(State(state): State<AppState>,
         .fetch_one(&state.db)
         .await;
 
-        match result {
-            Ok(user) => {
-                let users_response = json!({
-                    "status": "success",
-                    "data": {
-                        "user": user
-                    }
-                });
-                Ok(Json(users_response))
-            }
-            Err(err) => {
-                if err.to_string().contains("UNIQUE constraint failed") {
+ match result {
+        Ok(user) => {
+            let token = match generate_jwt_token(&user.email) {
+                Ok(t) => t,
+                Err(err) => {
                     let error_response = json!({
                         "status": "error",
-                        "message": "Такий користувач вже існує",
+                        "message": err
                     });
-                    return Err((StatusCode::CONFLICT, Json(error_response)));
+                    return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)));
                 }
+            };
+
+            let users_response = json!({
+                "status": "success",
+                "data": {
+                    "token": token,
+                    "user": user
+                }
+            });
+            Ok(Json(users_response))
+        }
+        Err(err) => {
+            if err.to_string().contains("UNIQUE constraint failed") {
                 let error_response = json!({
                     "status": "error",
-                    "message": format!("Помилка БД: {:?}", err)
+                    "message": "Такий користувач вже існує",
                 });
-                Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
+                return Err((StatusCode::CONFLICT, Json(error_response)));
             }
+            let error_response = json!({
+                "status": "error",
+                "message": format!("Помилка БД: {:?}", err)
+            });
+            Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)))
         }
+    }
 }
 
 
@@ -109,13 +123,47 @@ pub async fn login_user(State(state): State<AppState>,
         return Err((StatusCode::UNAUTHORIZED, Json(error_response)))
     }
 
+    let token = match generate_jwt_token(&payload.email) {
+        Ok(t) => t,
+        Err(err) => {
+            let error_response = json!({
+                "status": "error",
+                "message": err
+            });
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)));
+        }
+    };
 
-        let success_response = json!({
+    let success_response = json!({
         "status": "success",
         "data": {
-            "isValid" : "yes"
+            "token": token,
+            "user":{
+                "email": payload.email,
+            }
         }
     });
 
     Ok(Json(success_response))
+}
+
+
+pub fn generate_jwt_token(email: &str) -> Result<String, String> {
+    let expiration = Utc::now()
+        .checked_add_signed(Duration::seconds(10))
+        .expect("Помилка генерації часу для токена")
+        .timestamp() as usize;
+
+    let claims = Claims {
+        sub: email.to_string(),
+        exp: expiration,
+    };
+
+    let secret = "key for jwt треба в .env винести";
+
+    encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(secret.as_bytes())
+    ) .map_err(|err| format!("Помилка створення токена: {}", err))
 }

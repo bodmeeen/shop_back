@@ -4,7 +4,7 @@ CREATE TABLE users (
     first_name TEXT,
     last_name TEXT,
     role TEXT,
-    email TEXT NOT NULL,
+    email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
     phone_number TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP

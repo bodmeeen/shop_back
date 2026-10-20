@@ -1,3 +1,5 @@
+use core::str;
+
 use serde::{Deserialize, Serialize};
 // схеми
 #[derive(Serialize, Debug, sqlx::FromRow)]
@@ -37,4 +39,11 @@ pub struct RegisterUserSchema {
 pub struct LoginUserSchema {
     pub email: String,
     pub password: String,
+}
+
+// Для JWT
+#[derive(Serialize, Deserialize)]
+pub struct Claims {
+    pub sub: String, // Кого ідентифікує токен
+    pub exp: usize, // Час життя токена
 }
