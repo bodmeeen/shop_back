@@ -1,4 +1,4 @@
-use axum::{Json, extract::{State}, http::StatusCode, response::{IntoResponse}};
+use axum::{Json, async_trait, extract::{FromRequestParts, State}, http::{StatusCode, request::Parts}, response::IntoResponse};
 use crate::{AppState, models::users::{LoginUserSchema, RegisterUserSchema, User, Claims}};
 use serde_json::json;
 use argon2::{
@@ -158,7 +158,7 @@ pub fn generate_jwt_token(email: &str) -> Result<String, String> {
         sub: email.to_string(),
         exp: expiration,
     };
-
+// -----------------------------------------------------------------------------
     let secret = "key for jwt треба в .env винести";
 
     encode(

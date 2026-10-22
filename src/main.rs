@@ -1,31 +1,18 @@
-use axum::{routing::{get, delete, post, patch}, Router, http::Method};
 use sqlx::sqlite::SqlitePoolOptions;
 use sqlx::SqlitePool;
+use std::net::SocketAddr;
 
-use tower_http::cors::{Any, CorsLayer};
-
-
-mod handlers;
-mod models;
-mod telegram;
-use handlers::product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product};
-use handlers::categories_h::{get_categories, create_category};
-use handlers::admin::admin_users_h::{get_users, create_user, delete_user};
-use handlers::admin::admin_orders_h::{get_orders};
-use handlers::public_orders_h::{create_order, get_order_by_id};
-
-use handlers::users_h::{registration_user};
-
-use crate::handlers::{categories_h::get_category_by_id, users_h::login_user};
+pub mod handlers;
+pub mod models;
+pub mod telegram;
+pub mod routes;
 
 #[derive(Clone)]
-// SqlitePool працює як Arc, тож його не потрібно
-// додатково використовувати
-struct AppState {
-    db: SqlitePool,
+pub struct AppState {
+    pub db: SqlitePool,
 }
 
-#[tokio::main] // Макрос
+#[tokio::main]
 async fn main() {
     // Вказування що читати змінні потрібно і з .env файлу
     // ok() - якщо відкриття .env не вдалось, то пропустити >
@@ -48,56 +35,16 @@ async fn main() {
         }
     };
 
-    let state = AppState { db: pool.clone() };
+    let state = AppState { db: pool };
 
-    // Шар CORS; Потрібно буде змінити з Any
-    let cors = CorsLayer::new()
-        // Дозволити запити з будь-яких адрес
-        .allow_origin(Any)
-        // Дозволити ці методи
-        .allow_methods([Method::GET, Method::POST, Method:: PUT, Method::PATCH, Method::DELETE])
-        // Дозволити будь-які заголовки
-        .allow_headers(Any);
-
-    let app = Router::new()
-        .route("/api/products", get(get_products))
-        .route("/api/products", post(create_product))
-        .route("/api/products/:id/archive", patch(soft_delete_product))
-        .route("/api/products/:id/restore", patch(restore_product))
-
-        .route("/api/get_product_by_id/:id", get(get_product_by_id))
-
-        // .route("/api/products/:id", patch(update_product))
-
-        .route("/api/categories", get(get_categories))
-        .route("/api/categories", post(create_category))
-        .route("/api/category_by_id/:id", get(get_category_by_id))
-
-        // Адмінське
-        .route("/api/users", get(get_users))
-        .route("/api/users", post(create_user))
-        .route("/api/users/:id", delete(delete_user))
-
-        .route("/api/users_reg", post(registration_user))
-        
-        
-        // ''''''''''''''''''''''''''''''
-        .route("/api/users_login", post(login_user))
-
-
-        .route("/api/admin_orders", get(get_orders)) 
-        
-
-        .route("/api/orders", post(create_order).get(get_order_by_id)) 
-        .route("/api/orders/:id", get(get_order_by_id))
-
-        .layer(cors)
-        .with_state(state);
+    let app = routes::create_router(state);
 
     let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await.unwrap();
     println!("Сервер запущений за адресою: http://localhost:3000");
 
-    // serve це безкінечний цикл, сервер працює поки не перервати 
-    // його роботу через термінал
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(
+        listener, 
+        // Це для Governor щоб він бачив IP адреси
+        app.into_make_service_with_connect_info::<SocketAddr>()
+    ).await.unwrap();
 }

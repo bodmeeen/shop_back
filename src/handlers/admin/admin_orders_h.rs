@@ -1,4 +1,4 @@
-use axum::{Json, extract::{State}, response::{IntoResponse}};
+use axum::{Json, extract::{State}};
 use crate::{AppState, models::orders::{Order}};
 
 // окремо для таблиці orders
