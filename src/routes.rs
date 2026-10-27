@@ -11,7 +11,7 @@ use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 use crate::AppState; 
 
 use crate::handlers::{
-    product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product},
+    product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product, get_products_by_category_id},
     categories_h::{get_categories, create_category, get_category_by_id},
     auth_h::{registration_user, login_user},
     admin::admin_users_h::{get_users, create_user, delete_user},
@@ -33,8 +33,8 @@ pub fn create_router(state: AppState) -> Router {
     // Rate Limiting
     let governor_conf = Arc::new(
         GovernorConfigBuilder::default()
-            .per_second(3)
-            .burst_size(10)
+            .per_second(8)
+            .burst_size(60)
             .finish()
             .unwrap(),
     );
@@ -45,6 +45,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/products/:id/archive", patch(soft_delete_product))
         .route("/api/products/:id/restore", patch(restore_product))
         .route("/api/get_product_by_id/:id", get(get_product_by_id))
+        .route("/api/get_products_by_category_id/:id", get(get_products_by_category_id))
 
 
         .route("/api/categories", get(get_categories).post(create_category))

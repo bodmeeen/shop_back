@@ -142,6 +142,23 @@ pub async fn get_product_by_id(State(state): State<AppState>,
     Json(products)
 }
 
+pub async fn get_products_by_category_id(State(state): State<AppState>,
+        Path(id): Path<i64>,
+        ) -> Json<Vec<Product>> {
+    
+    let products = sqlx::query_as(
+        "SELECT * FROM products WHERE category_id = $1"
+    )
+    .bind(&id)
+    .fetch_all(&state.db)
+    .await
+    .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
+    // .unwrap(); // Поки звичайни для нормального виведення помилок
+    Json(products)
+} 
+
+
+
     // Ф-я для повного видалення товару з БД
 // pub async fn delete_product(State(state): State<AppState>,
 //         Path(id): Path<i64>,
