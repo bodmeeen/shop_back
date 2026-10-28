@@ -24,8 +24,8 @@ pub async fn create_product(State(state): State<AppState>,
     
     
     let result = sqlx::query_as::<_, Product>(
-        r#"INSERT INTO products (title, category_id, body, old_price, price, status) 
-        VALUES ($1, $2, $3, $4, $5, $6)
+        r#"INSERT INTO products (title, category_id, body, old_price, price, quantity, status) 
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
         RETURNING *"#,
         )
         .bind(&payload.title)
@@ -33,6 +33,7 @@ pub async fn create_product(State(state): State<AppState>,
         .bind(&payload.body)
         .bind(&payload.old_price)
         .bind(&payload.price)
+        .bind(&payload.quantity)
         .bind(&payload.status)
         .fetch_one(&state.db)
         .await;
@@ -156,6 +157,26 @@ pub async fn get_products_by_category_id(State(state): State<AppState>,
     // .unwrap(); // Поки звичайни для нормального виведення помилок
     Json(products)
 } 
+
+// pub async 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

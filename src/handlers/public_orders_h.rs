@@ -40,23 +40,47 @@ pub async fn create_order (State(state): State<AppState>,
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
 
-    // Збереження товарів з кошика
+    // Збереження товарів з кошика та віднімання залишків
     for item in payload.items {
+        
+        // Віднімання залишків
+        let update_result = sqlx::query(
+            r#"UPDATE products 
+               SET quantity = quantity - $1 
+               WHERE id = $2 AND quantity >= $1"#
+        )
+        .bind(item.quantity) // на скільки штук зменшити
+        .bind(item.product_id) // який товар
+        .execute(&mut *tx)
+        .await
+        .map_err(|err| {
+            let error_response = json!({"status": "error", "message": format!("Помилка при оновленні залишків: {:?}", err)});
+            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
+        })?;
+
+        // Якщо rows_affected() == 0, значить товару немає або просять більше, ніж є
+        if update_result.rows_affected() == 0 {
+            let error_response = json!({
+                "status": "error",
+                "message": format!("Недостатньо товару на складі або товар видалено (ID: {})", item.product_id)
+            });
+            // Транзакція автоматично відкотиться при виході з функції
+            return Err((StatusCode::BAD_REQUEST, Json(error_response))); 
+        }
+
+        // Якщо залишки віднято, то зберігається в order_items
         sqlx::query(
             r#"INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) 
             VALUES ($1, $2, $3, $4)"#
         )
-        .bind(order_id) // id який отримано з бази
+        .bind(order_id)
         .bind(item.product_id)
         .bind(item.quantity)
         .bind(item.price_at_purchase)
         .execute(&mut *tx)
         .await
         .map_err(|err| {
-            let error_response = json!({
-                "status": "error",
-                "message": format!("Помилка при збереженні товару: {:?}", err)
-            });
+            let error_response = json!({"status": "error", "message": format!("Помилка при збереженні товару: {:?}", err)});
             (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
         })?;
     }

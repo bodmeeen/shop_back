@@ -1,4 +1,4 @@
-use axum::{Json, async_trait, extract::{FromRequestParts, State}, http::{StatusCode, request::Parts}, response::IntoResponse};
+use axum::{Json, extract::{State}, http::{StatusCode}, response::IntoResponse};
 use crate::{AppState, models::users::{LoginUserSchema, RegisterUserSchema, User, Claims}};
 use serde_json::json;
 use argon2::{

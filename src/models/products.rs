@@ -8,6 +8,7 @@ pub struct Product {
     pub body: String,
     pub old_price: Option<i64>, // Option, бо може бути NULL
     pub price: i64,
+    pub quantity: i64,
     pub status: String,
     pub is_active: bool,
     // потрібно буде дізнатись як правильно тут зробити created_at
@@ -29,6 +30,7 @@ pub struct CreateProductSchema {
     pub category_id: i64,
     pub body: String,
     pub old_price: Option<i64>, // Option, бо може бути NULL
+    pub quantity: i64,
     pub price: i64,
     pub status: String,
 }

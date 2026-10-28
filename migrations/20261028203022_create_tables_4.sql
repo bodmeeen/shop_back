@@ -21,6 +21,7 @@ CREATE TABLE products (
     title TEXT NOT NULL,
     category_id INTEGER NOT NULL,
     body TEXT,
+    quantity INTEGER NOT NULL,
     old_price INTEGER,
     price INTEGER NOT NULL,
     status TEXT,
@@ -79,4 +80,4 @@ CREATE TABLE order_items (
     PRIMARY KEY (order_id, product_id),
     FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE RESTRICT
-);
+)
