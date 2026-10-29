@@ -8,15 +8,16 @@ use axum::http::Method;
 use tower_http::cors::{Any, CorsLayer};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
-use crate::AppState; 
+use crate::{AppState}; 
 
 use crate::handlers::{
     product_h::{get_products, create_product, soft_delete_product, get_product_by_id, restore_product, get_products_by_category_id},
     categories_h::{get_categories, create_category, get_category_by_id},
     auth_h::{registration_user, login_user},
+    public_orders_h::{create_order, get_order_by_id},
     admin::admin_users_h::{get_users, create_user, delete_user},
     admin::admin_orders_h::{get_orders},
-    public_orders_h::{create_order, get_order_by_id},
+    admin::admin_products_h::{update_product_quantity}
 };
 
 pub fn create_router(state: AppState) -> Router {
@@ -46,6 +47,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/products/:id/restore", patch(restore_product))
         .route("/api/get_product_by_id/:id", get(get_product_by_id))
         .route("/api/get_products_by_category_id/:id", get(get_products_by_category_id))
+        .route("/api/admin/products/:id/quantity", patch(update_product_quantity))
 
 
         .route("/api/categories", get(get_categories).post(create_category))
