@@ -24,7 +24,7 @@ pub async fn create_user(State(state): State<AppState>,
         )
         .bind(&payload.first_name)
         .bind(&payload.last_name)
-        .bind(&payload.role)
+        .bind("customer")
         .bind(&payload.email)
         .bind(&payload.password_hash)
         .bind(&payload.phone_number)

@@ -28,7 +28,7 @@ pub async fn registration_user(State(state): State<AppState>,
         .bind(&payload.first_name)
         .bind(&payload.email)
         .bind(&hashed_password)
-        .bind("user")
+        .bind("customer")
         .fetch_one(&state.db)
         .await;
 
