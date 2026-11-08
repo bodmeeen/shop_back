@@ -1,8 +1,9 @@
 use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::users::{User, CreateUserSchema}};
+use crate::{AppState, models::users::{Claims, CreateUserSchema, User}};
 use serde_json::json;
 
-pub async fn get_users(State(state): State<AppState>) -> Json<Vec<User>> {
+pub async fn get_users(
+    State(state): State<AppState>) -> Json<Vec<User>> {
     let users = sqlx::query_as(
         "SELECT * FROM users"
     )
@@ -12,10 +13,19 @@ pub async fn get_users(State(state): State<AppState>) -> Json<Vec<User>> {
     Json(users)
 }
 
-pub async fn create_user(State(state): State<AppState>,
-        Json(payload): Json<CreateUserSchema>,
-        ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+pub async fn create_user(
+    claims: Claims,
+    State(state): State<AppState>,
+    Json(payload): Json<CreateUserSchema>,
+    ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     
+    if claims.role != "admin" {
+        let error_response = json!({
+            "status": "error",
+            "message": "Доступ заборонено"
+        });
+        return Err((StatusCode::FORBIDDEN, Json(error_response)));
+    }
     
     let result = sqlx::query_as::<_, User>(
         r#"INSERT INTO users (first_name, last_name, role, email, password_hash, phone_number) 

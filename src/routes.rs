@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
 use axum::{
+    http::Method,
     routing::{delete, get, patch, post},
     Router,
 };
-use axum::http::Method;
+use axum::http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use tower_http::cors::{Any, CorsLayer};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
@@ -12,12 +13,13 @@ use crate::{AppState};
 
 use crate::handlers::{
     product_h::{get_active_products, get_product_by_id, get_products_by_category_id},
-    categories_h::{get_categories, create_category, get_category_by_id},
+    categories_h::{get_categories, get_category_by_id},
     auth_h::{registration_user, login_user},
     public_orders_h::{create_order, get_order_by_id},
     admin::admin_users_h::{get_users, create_user, delete_user},
     admin::admin_orders_h::{get_orders},
-    admin::admin_products_h::{get_products, update_product_quantity, create_product, soft_delete_product, restore_product}
+    admin::admin_products_h::{get_products, update_product_quantity, create_product, soft_delete_product, restore_product},
+    admin::admin_categories_h::{create_category},
 };
 
 pub fn create_router(state: AppState) -> Router {
@@ -25,10 +27,15 @@ pub fn create_router(state: AppState) -> Router {
     let cors = CorsLayer::new()
         // Дозволити запити з будь-яких адрес
         .allow_origin(Any)
-        // Дозволити ці методи
-        .allow_methods([Method::GET, Method::POST, Method:: PUT, Method::PATCH, Method::DELETE])
-        // Дозволити будь-які заголовки
-        .allow_headers(Any);
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::PATCH,
+            Method::DELETE,
+            Method::OPTIONS,
+        ])
+        .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
     
     // Rate Limiting

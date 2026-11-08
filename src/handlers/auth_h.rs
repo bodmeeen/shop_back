@@ -34,7 +34,9 @@ pub async fn registration_user(State(state): State<AppState>,
 
  match result {
         Ok(user) => {
-            let token = match generate_jwt_token(&user.email) {
+            let role = user.role.as_deref().unwrap_or("customer");
+
+            let token = match generate_jwt_token(&user.email, role) {
                 Ok(t) => t,
                 Err(err) => {
                     let error_response = json!({
@@ -123,7 +125,9 @@ pub async fn login_user(State(state): State<AppState>,
         return Err((StatusCode::UNAUTHORIZED, Json(error_response)))
     }
 
-    let token = match generate_jwt_token(&payload.email) {
+    let role = get_user_by_email.role.as_deref().unwrap_or("customer");
+
+    let token = match generate_jwt_token(&payload.email,role) {
         Ok(t) => t,
         Err(err) => {
             let error_response = json!({
@@ -140,6 +144,7 @@ pub async fn login_user(State(state): State<AppState>,
             "token": token,
             "user":{
                 "email": payload.email,
+                "role": role
             }
         }
     });
@@ -148,18 +153,21 @@ pub async fn login_user(State(state): State<AppState>,
 }
 
 
-pub fn generate_jwt_token(email: &str) -> Result<String, String> {
+pub fn generate_jwt_token(email: &str, role: &str) -> Result<String, String> {
+    
     let expiration = Utc::now()
-        .checked_add_signed(Duration::seconds(10))
+        .checked_add_signed(Duration::hours(24))
         .expect("Помилка генерації часу для токена")
         .timestamp() as usize;
 
     let claims = Claims {
         sub: email.to_string(),
+        role: role.to_string(),
         exp: expiration,
     };
-// -----------------------------------------------------------------------------
-    let secret = "key for jwt треба в .env винести";
+
+    let secret = std::env::var("JWT_SECRET")
+        .map_err(|_| "Помилка сервера: не знайдено JWT_SECRET".to_string())?;
 
     encode(
         &Header::default(),

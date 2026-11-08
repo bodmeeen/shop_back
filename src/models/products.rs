@@ -11,7 +11,6 @@ pub struct Product {
     pub quantity: i64,
     pub status: String,
     pub is_active: bool,
-    // потрібно буде дізнатись як правильно тут зробити created_at
     pub created_at: Option<String>,
     // Це можна буде повернути коли потрібно буде в беку
     // робити якісь дії з датою, порівняння дат і тд.

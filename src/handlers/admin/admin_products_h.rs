@@ -3,7 +3,7 @@ use axum::{Json, extract::{Path, State}, response::IntoResponse};
 use reqwest::StatusCode;
 use serde_json::json;
 
-use crate::{AppState, models::products::{CreateProductSchema, Product}};
+use crate::{AppState, models::{products::{CreateProductSchema, Product}, users::Claims}};
 
 #[derive(Deserialize)]
 pub struct UpdateQuantityRequest {
@@ -23,10 +23,19 @@ pub async fn get_products(State(state): State<AppState>) -> Json<Vec<Product>> {
 }
 
 pub async fn update_product_quantity(
+    claims: Claims,
     State(state): State<AppState>,
     Path(id): Path<i64>,
     Json(payload): Json<UpdateQuantityRequest>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+
+    if claims.role != "admin" {
+        let error_response = json!({
+            "status": "error",
+            "message": "Доступ заборонено"
+        });
+        return Err((StatusCode::FORBIDDEN, Json(error_response)));
+    }
     
     // Перевірка щоб з фронта не прийшов мінус
     if payload.quantity < 0 {
@@ -63,11 +72,20 @@ pub async fn update_product_quantity(
     Ok((StatusCode::OK, Json(json!({"status": "success"}))))
 }
 
-pub async fn create_product(State(state): State<AppState>,
+pub async fn create_product(
+    claims: Claims,
+    State(state): State<AppState>,
         // отримання даних від користувача в payload
         Json(payload): Json<CreateProductSchema>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
-    
+
+    if claims.role != "admin" {
+        let error_response = json!({
+            "status": "error",
+            "message": "Доступ заборонено"
+        });
+        return Err((StatusCode::FORBIDDEN, Json(error_response)));
+    }
     
     let result = sqlx::query_as::<_, Product>(
         r#"INSERT INTO products (title, category_id, body, old_price, price, quantity, status) 
@@ -170,8 +188,6 @@ pub async fn restore_product (State(state): State<AppState>,
         });
         Ok(Json(response))
 }
-
-
 
 
 
