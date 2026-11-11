@@ -48,4 +48,12 @@ pub struct OrderResponse {
     pub items: Vec<OrderItem>
 }
 
-
+#[derive(Serialize, FromRow)]
+pub struct OrderItemDetail {
+    pub product_id: i64,
+    pub quantity: i64,
+    pub price_at_purchase: i64,
+    // Поле підтягнуте черех JOIN з таблиці products
+    pub title: String, 
+    // pub image_url: Option<String>,
+}

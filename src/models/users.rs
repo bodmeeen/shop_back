@@ -44,7 +44,7 @@ pub struct LoginUserSchema {
 // Для JWT
 #[derive(Serialize, Deserialize)]
 pub struct Claims {
-    pub sub: String, // Кого ідентифікує токен
+    pub sub: i64, // ID користувача, який є власником токена
     pub role: String,
     pub exp: usize, // Час життя токена
 }

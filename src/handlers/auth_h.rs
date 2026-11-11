@@ -36,7 +36,7 @@ pub async fn registration_user(State(state): State<AppState>,
         Ok(user) => {
             let role = user.role.as_deref().unwrap_or("customer");
 
-            let token = match generate_jwt_token(&user.email, role) {
+            let token = match generate_jwt_token(user.id, role) {
                 Ok(t) => t,
                 Err(err) => {
                     let error_response = json!({
@@ -127,7 +127,7 @@ pub async fn login_user(State(state): State<AppState>,
 
     let role = get_user_by_email.role.as_deref().unwrap_or("customer");
 
-    let token = match generate_jwt_token(&payload.email,role) {
+        let token = match generate_jwt_token(get_user_by_email.id, role) {
         Ok(t) => t,
         Err(err) => {
             let error_response = json!({
@@ -153,7 +153,7 @@ pub async fn login_user(State(state): State<AppState>,
 }
 
 
-pub fn generate_jwt_token(email: &str, role: &str) -> Result<String, String> {
+pub fn generate_jwt_token(user_id: i64, role: &str) -> Result<String, String> {
     
     let expiration = Utc::now()
         .checked_add_signed(Duration::hours(24))
@@ -161,7 +161,7 @@ pub fn generate_jwt_token(email: &str, role: &str) -> Result<String, String> {
         .timestamp() as usize;
 
     let claims = Claims {
-        sub: email.to_string(),
+        sub: user_id,
         role: role.to_string(),
         exp: expiration,
     };

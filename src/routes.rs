@@ -16,6 +16,8 @@ use crate::handlers::{
     categories_h::{get_categories, get_category_by_id},
     auth_h::{registration_user, login_user},
     public_orders_h::{create_order, get_order_by_id},
+    user_orders_h::{get_orders_by_user_id},
+
     admin::admin_users_h::{get_users, create_user, delete_user},
     admin::admin_orders_h::{get_orders},
     admin::admin_products_h::{get_products, update_product_quantity, create_product, soft_delete_product, restore_product},
@@ -69,7 +71,7 @@ pub fn create_router(state: AppState) -> Router {
 
 
         .route("/api/admin_orders", get(get_orders))
-        .route("/api/orders", post(create_order)) 
+        .route("/api/orders", post(create_order).get(get_orders_by_user_id)) 
         .route("/api/orders/:id", get(get_order_by_id))
 
         .layer(GovernorLayer {

@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use serde::Deserialize;
 use axum::{Json, extract::State, response::IntoResponse};
 use reqwest::StatusCode;
@@ -63,12 +65,12 @@ pub async fn create_category(claims: Claims, State(state): State<AppState>,
 }
 
 
-// pub async fn soft_delete_product (State(state): State<AppState>,
+// pub async fn soft_delete_category (State(state): State<AppState>,
 //         Path(id): Path<i64>,
 //         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
 
-//     let updated_product = sqlx::query_as::<_, Product> (
-//         r#"UPDATE products SET status = 'hidden' WHERE id = $1 RETURNING *"#)
+//     let updated_category = sqlx::query_as::<_, Category> (
+//         r#"UPDATE categories SET status = 'hidden' WHERE id = $1 RETURNING *"#)
 //         .bind(&id)
 //         .fetch_one(&state.db)
 //         .await
@@ -86,7 +88,7 @@ pub async fn create_category(claims: Claims, State(state): State<AppState>,
 //         let response = json!({
 //             "status": "success",
 //             "data": json!({
-//                 "product": updated_product
+//                 "category": updated_category
 //             })
 //         });
 //         Ok(Json(response))

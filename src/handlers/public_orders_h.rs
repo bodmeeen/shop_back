@@ -1,9 +1,10 @@
 use axum::{Json, extract::{Path, State}, http::StatusCode, response::{IntoResponse}};
-use crate::{AppState, models::orders::{CreateOrderRequest, Order, OrderItem}, telegram::send_telegram_notification};
+use crate::{AppState, models::{orders::{CreateOrderRequest, Order, OrderItemDetail}, users::Claims}, telegram::send_telegram_notification};
 use serde_json::json;
 
 // приймає дані, відкриває транзакцію, зберігає клієнта та товари, підтвердження
 pub async fn create_order (State(state): State<AppState>,
+        optional_claims: Option<Claims>,
         // отримання даних від користувача в payload
         Json(payload): Json<CreateOrderRequest>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
@@ -17,13 +18,15 @@ pub async fn create_order (State(state): State<AppState>,
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
 
+    let user_id = optional_claims.map(|c| c.sub);
     // Створення замовлення і збирання id
     // query_scalar - бо потрібна тільки одна цифра а не ціла структура
     let order_id = sqlx::query_scalar::<_, i64>(
-        r#"INSERT INTO orders (customer_first_name, customer_last_name, customer_phone, delivery_info, total_price, status) 
-        VALUES ($1, $2, $3, $4, $5, 'new')
+        r#"INSERT INTO orders (user_id, customer_first_name, customer_last_name, customer_phone, delivery_info, total_price, status) 
+        VALUES ($1, $2, $3, $4, $5, $6, 'new')
         RETURNING id"#
     )
+    .bind(user_id)
     .bind(&payload.customer_first_name)
     .bind(&payload.customer_last_name)
     .bind(&payload.customer_phone)
@@ -134,7 +137,6 @@ pub async fn get_order_by_id(
     .fetch_one(&state.db)
     .await
     .map_err(|err| {
-        // Якщо рядка немає, то 404
         if let sqlx::Error::RowNotFound = err {
             let error_response = json!({
                 "status": "error",
@@ -150,12 +152,21 @@ pub async fn get_order_by_id(
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
 
-    // Діставання всіх товарів
-    let items = sqlx::query_as::<_, OrderItem>(
-        "SELECT * FROM order_items WHERE order_id = $1"
+    // Діставання всіх товарів із підтягуванням їхніх назв
+    let items = sqlx::query_as::<_, OrderItemDetail>(
+        r#"
+        SELECT 
+            oi.order_id,
+            oi.product_id, 
+            oi.quantity, 
+            oi.price_at_purchase, 
+            p.title
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = $1
+        "#
     )
     .bind(id)
-    // fetch_all не дає RowNotFound, якщо пусто то буде пустий масив
     .fetch_all(&state.db)
     .await
     .map_err(|err| {
@@ -165,8 +176,7 @@ pub async fn get_order_by_id(
         });
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
-
-    // Пакування
+    
     let success_response = json!({
         "status": "success",
         "data": {
