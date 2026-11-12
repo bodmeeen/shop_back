@@ -13,7 +13,8 @@ CREATE TABLE users (
 CREATE TABLE categories (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
-    image_url TEXT
+    image_url TEXT,
+    status TEXT
 );
 
 CREATE TABLE products (

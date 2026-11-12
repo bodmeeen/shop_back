@@ -25,6 +25,15 @@ pub struct CreateUserSchema {
     pub phone_number: Option<String>,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct UpdateUserSchema {
+    pub id: i64,
+    pub first_name: Option<String>,
+    pub last_name: Option<String>,
+    pub email: Option<String>,
+    pub phone_number: Option<String>
+}
+
 
 // Схема для отримання даних при реєстрації користувача,
 // а особливо нехешований пароль

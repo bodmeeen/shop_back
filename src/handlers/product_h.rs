@@ -43,6 +43,4 @@ pub async fn get_products_by_category_id(State(state): State<AppState>,
     .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
     // .unwrap(); // Поки звичайний для нормального виведення помилок
     Json(products)
-} 
-
-// pub async 
+}

@@ -29,77 +29,77 @@ async fn main() -> Result<(), sqlx::Error> {
 
     // Товари 
     let prod_1 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Величезний ведмідь Балу', ?, 'М''який плюшевий ведмідь, 120 см, карамельний колір. Ідеальний для подарунка.', 150000, 120000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Величезний ведмідь Балу', ?, 'М''який плюшевий ведмідь, 120 см, карамельний колір. Ідеальний для подарунка.', 150000, 120000, 2, 'active') RETURNING id",
         cat_bears
     ).fetch_one(&pool).await?.id;
 
     let prod_2 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Зайчик Вухастик', ?, 'Ніжний зайчик для сну, 30 см, гіпоалергенний матеріал.', NULL, 65000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Зайчик Вухастик', ?, 'Ніжний зайчик для сну, 30 см, гіпоалергенний матеріал.', NULL, 65000, 2, 'active') RETURNING id",
         cat_bunnies
     ).fetch_one(&pool).await?.id;
 
     let prod_3 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Собачка, що гавкає', ?, 'Інтерактивна собачка, ходить і видає звуки. Живлення від батарейок.', 110000, 95000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Собачка, що гавкає', ?, 'Інтерактивна собачка, ходить і видає звуки. Живлення від батарейок.', 110000, 95000, 2, 'active') RETURNING id",
         cat_interactive
     ).fetch_one(&pool).await?.id;
 
     let prod_4 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Набір конструктора ''Замок''', ?, 'Конструктор Lego', 200000, 180000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Набір конструктора ''Замок''', ?, 'Конструктор Lego', 200000, 180000, 2, 'active') RETURNING id",
         cat_constructors
     ).fetch_one(&pool).await?.id;
 
     let prod_5 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Пазл ''Картина''', ?, 'Пазл розміром 1000x1250 см', 125000, 115000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Пазл ''Картина''', ?, 'Пазл розміром 1000x1250 см', 125000, 115000, 2, 'active') RETURNING id",
         cat_puzzles
     ).fetch_one(&pool).await?.id;
 
     let prod_6 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Ведмедик Паддінгтон', ?, 'Класичний плюшевий ведмедик у синьому пальто та червоному капелюсі. Висота 40 см.', NULL, 85000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Ведмедик Паддінгтон', ?, 'Класичний плюшевий ведмедик у синьому пальто та червоному капелюсі. Висота 40 см.', NULL, 85000, 2, 'active') RETURNING id",
         cat_bears
     ).fetch_one(&pool).await?.id;
 
     let prod_7 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Панда По', ?, 'Чорно-біла плюшева панда, дуже м''яка на дотик. Ідеально підходить для обіймів.', 100000, 89000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Панда По', ?, 'Чорно-біла плюшева панда, дуже м''яка на дотик. Ідеально підходить для обіймів.', 100000, 89000, 2, 'active') RETURNING id",
         cat_bears
     ).fetch_one(&pool).await?.id;
 
     let prod_8 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Зайчиха Міла', ?, 'Милий зайчик у рожевій сукні, з довгими вушками. Прекрасний подарунок для дівчинки.', 75000, 60000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Зайчиха Міла', ?, 'Милий зайчик у рожевій сукні, з довгими вушками. Прекрасний подарунок для дівчинки.', 75000, 60000, 2, 'active') RETURNING id",
         cat_bunnies
     ).fetch_one(&pool).await?.id;
 
     let prod_9 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Заєць-стрибунець', ?, 'Маленький пухнастий зайчик сірого кольору. Компактний розмір, зручно брати з собою.', NULL, 45000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Заєць-стрибунець', ?, 'Маленький пухнастий зайчик сірого кольору. Компактний розмір, зручно брати з собою.', NULL, 45000, 2, 'active') RETURNING id",
         cat_bunnies
     ).fetch_one(&pool).await?.id;
 
     let prod_10 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Кіт, що муркоче', ?, 'Сенсорна іграшка. Реагує на погладжування, муркоче та махає хвостом.', 130000, 115000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Кіт, що муркоче', ?, 'Сенсорна іграшка. Реагує на погладжування, муркоче та махає хвостом.', 130000, 115000, 2, 'active') RETURNING id",
         cat_interactive
     ).fetch_one(&pool).await?.id;
 
     let prod_11 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Робот-динозавр Рекс', ?, 'Ходить, гарчить, очі світяться. Керується за допомогою пульта.', 250000, 210000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Робот-динозавр Рекс', ?, 'Ходить, гарчить, очі світяться. Керується за допомогою пульта.', 250000, 210000, 2, 'active') RETURNING id",
         cat_interactive
     ).fetch_one(&pool).await?.id;
 
     let prod_12 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Магнітний конструктор', ?, 'Набір з 50 яскравих магнітних деталей для розвитку просторової уяви.', 180000, 155000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Магнітний конструктор', ?, 'Набір з 50 яскравих магнітних деталей для розвитку просторової уяви.', 180000, 155000, 2, 'active') RETURNING id",
         cat_constructors
     ).fetch_one(&pool).await?.id;
 
     let prod_13 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Дерев''яне містечко', ?, 'Екологічний конструктор з натурального дерева, покритий безпечними фарбами.', NULL, 95000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Дерев''яне містечко', ?, 'Екологічний конструктор з натурального дерева, покритий безпечними фарбами.', NULL, 95000, 2, 'active') RETURNING id",
         cat_constructors
     ).fetch_one(&pool).await?.id;
 
     let prod_14 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Пазл \"Космос\"', ?, 'Пазл на 500 елементів. Готова картина світиться в темряві!', 65000, 50000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('Пазл \"Космос\"', ?, 'Пазл на 500 елементів. Готова картина світиться в темряві!', 65000, 50000, 2, 'active') RETURNING id",
         cat_puzzles
     ).fetch_one(&pool).await?.id;
 
     let prod_15 = sqlx::query!(
-        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('3D-пазл \"Корабель\"', ?, 'Об''ємний пазл для складання дерев''яного вітрильника. Клей не потрібен.', 150000, 135000, 2, 'in_stock') RETURNING id",
+        "INSERT INTO products (title, category_id, body, old_price, price, quantity, status) VALUES ('3D-пазл \"Корабель\"', ?, 'Об''ємний пазл для складання дерев''яного вітрильника. Клей не потрібен.', 150000, 135000, 2, 'active') RETURNING id",
         cat_puzzles
     ).fetch_one(&pool).await?.id;
 
@@ -123,14 +123,18 @@ async fn main() -> Result<(), sqlx::Error> {
     sqlx::query!("INSERT INTO product_images (product_id, image_url, is_main) VALUES (?, '/images/products/puzzle_ship_main.jpg', 1)", prod_15).execute(&pool).await?;
 
     // Користувачі
-    let user_id = sqlx::query!(
-        "INSERT INTO users (first_name, last_name, role, email, password_hash, phone_number) VALUES ('Максим', 'Покупець', 'customer', 'max@example.com', 'hashed_pass_123', '+380991234567') RETURNING id"
+    let user_1 = sqlx::query!(
+        "INSERT INTO users (first_name, last_name, role, email, password_hash, phone_number) VALUES ('888', '888', 'customer', '888', 'hashed_pass_888', '888') RETURNING id"
+    ).fetch_one(&pool).await?.id;
+
+    let user_2 = sqlx::query!(
+        "INSERT INTO users (first_name, last_name, role, email, password_hash, phone_number) VALUES ('999', '999', 'admin', '999', 'hashed_pass_999', '999') RETURNING id"
     ).fetch_one(&pool).await?.id;
 
     // Замовлення
     let order_id = sqlx::query!(
-        "INSERT INTO orders (user_id, customer_first_name, customer_last_name, customer_phone, delivery_info, total_price, status) VALUES (?, 'Максим', 'Покупець', '+380991234567', 'м. Чернівці, Відділення 123', 240000, 'processing') RETURNING id",
-        user_id
+        "INSERT INTO orders (user_id, customer_first_name, customer_last_name, customer_phone, delivery_info, total_price, status) VALUES (?, '123', '123', '+123', 'м. Чернівці, Відділення 123', 240000, 'processing') RETURNING id",
+        user_1
     ).fetch_one(&pool).await?.id;
 
     sqlx::query!("INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, 2, 1200)", order_id, prod_1).execute(&pool).await?;
