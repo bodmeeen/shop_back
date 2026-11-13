@@ -9,7 +9,7 @@ use axum::http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
 use tower_http::cors::{Any, CorsLayer};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
-use crate::{AppState, handlers::users_h::{get_user_by_id, update_user_data}}; 
+use crate::{AppState, handlers::{product_h::get_similar_products, users_h::{get_user_by_id, update_user_data}}}; 
 
 use crate::handlers::{
     product_h::{get_active_products, get_product_by_id, get_products_by_category_id},
@@ -56,6 +56,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/products/category/:id", get(get_products_by_category_id))
         .route("/api/products/:id/archive", patch(soft_delete_product))
         .route("/api/products/:id/restore", patch(restore_product))
+        .route("/api/products/:id/similar", get(get_similar_products))
         .route("/api/admin/products", get(get_products).post(create_product))
         .route("/api/admin/products/:id/quantity", patch(update_product_quantity));
 

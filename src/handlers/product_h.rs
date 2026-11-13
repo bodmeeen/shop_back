@@ -1,4 +1,5 @@
-use axum::{Json, extract::{Path, State}};
+use axum::{Json, extract::{Path, State}, response::IntoResponse};
+use reqwest::StatusCode;
 use crate::{AppState, models::products::{Product}};
 
 // Хендлер (обробник запиту). Звичайна ф-я яка повертає текст
@@ -43,4 +44,35 @@ pub async fn get_products_by_category_id(State(state): State<AppState>,
     .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
     // .unwrap(); // Поки звичайний для нормального виведення помилок
     Json(products)
+}
+
+// Отримання схожих товарів ( з тієї ж категорії, крім поточного)
+pub async fn get_similar_products(
+    State(state): State<AppState>,
+    Path(id): Path<i64>,
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    let products = sqlx::query_as::<_, Product>(
+        r#"
+        SELECT * FROM products 
+        WHERE category_id = (SELECT category_id FROM products WHERE id = $1)
+          AND id != $1 
+          AND status = 'active'
+        ORDER BY RANDOM() 
+        LIMIT 4
+        "#
+    )
+    .bind(id)
+    .fetch_all(&state.db)
+    .await
+    .map_err(|err| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(serde_json::json!({
+                "status": "error",
+                "message": format!("Помилка БД: {:?}", err)
+            })),
+        )
+    })?;
+
+    Ok(Json(products))
 }
