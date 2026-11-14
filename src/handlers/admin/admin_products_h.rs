@@ -11,14 +11,28 @@ pub struct UpdateQuantityRequest {
 }
 
 pub async fn get_products(State(state): State<AppState>) -> Json<Vec<Product>> {
-    // Запит до бази
-    let products = sqlx::query_as(
-        "SELECT * FROM products"
+    let products = sqlx::query_as::<_, Product>(
+        r#"
+        SELECT
+            p.id,
+            p.title,
+            p.category_id,
+            p.body,
+            p.old_price,
+            p.price,
+            p.quantity,
+            p.status,
+            p.is_active,
+            p.created_at,
+            pi.image_url AS image_url
+        FROM products AS p
+        LEFT JOIN product_images AS pi
+            ON pi.product_id = p.id AND pi.is_main = 1
+        "#
     )
-    .fetch_all(&state.db) // Виконання запиту через пул з'єднань
+    .fetch_all(&state.db)
     .await
-    // .unwrap_or_else(|_| vec![]); // Якщо помилка, то поверне пустий список
-    .unwrap(); // Поки звичайни для нормального виведення помилок
+    .unwrap();
     Json(products)
 }
 
@@ -88,9 +102,22 @@ pub async fn create_product(
     }
     
     let result = sqlx::query_as::<_, Product>(
-        r#"INSERT INTO products (title, category_id, body, old_price, price, quantity, status) 
+        r#"
+        INSERT INTO products (title, category_id, body, old_price, price, quantity, status)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
-        RETURNING *"#,
+        RETURNING
+            id,
+            title,
+            category_id,
+            body,
+            old_price,
+            price,
+            quantity,
+            status,
+            is_active,
+            created_at,
+            NULL AS image_url
+        "#,
         )
         .bind(&payload.title)
         .bind(&payload.category_id)
@@ -135,7 +162,23 @@ pub async fn soft_delete_product (State(state): State<AppState>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
 
     let updated_product = sqlx::query_as::<_, Product> (
-        r#"UPDATE products SET status = 'hidden' WHERE id = $1 RETURNING *"#)
+        r#"
+        UPDATE products
+        SET status = 'hidden'
+        WHERE id = $1
+        RETURNING
+            id,
+            title,
+            category_id,
+            body,
+            old_price,
+            price,
+            quantity,
+            status,
+            is_active,
+            created_at,
+            NULL AS image_url
+        "#)
         .bind(&id)
         .fetch_one(&state.db)
         .await
@@ -165,7 +208,23 @@ pub async fn restore_product (State(state): State<AppState>,
         ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
 
     let updated_product = sqlx::query_as::<_, Product> (
-        r#"UPDATE products SET status = 'active' WHERE id = $1 RETURNING *"#)
+        r#"
+        UPDATE products
+        SET status = 'active'
+        WHERE id = $1
+        RETURNING
+            id,
+            title,
+            category_id,
+            body,
+            old_price,
+            price,
+            quantity,
+            status,
+            is_active,
+            created_at,
+            NULL AS image_url
+        "#)
         .bind(&id)
         .fetch_one(&state.db)
         .await

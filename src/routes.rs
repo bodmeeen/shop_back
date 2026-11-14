@@ -1,15 +1,15 @@
 use std::sync::Arc;
 
+use std::path::PathBuf;
+
 use axum::{
-    http::Method,
-    routing::{delete, get, patch, post},
-    Router,
+    Router, http::Method, middleware, routing::{get, patch, post},
 };
 use axum::http::header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE};
-use tower_http::cors::{Any, CorsLayer};
+use tower_http::{cors::{Any, CorsLayer}, services::ServeDir};
 use tower_governor::{governor::GovernorConfigBuilder, GovernorLayer};
 
-use crate::{AppState, handlers::{product_h::get_similar_products, users_h::{get_user_by_id, update_user_data}}}; 
+use crate::{AppState, handlers::{middleware::require_admin, product_h::get_similar_products, users_h::{get_user_by_id, update_user_data}}}; 
 
 use crate::handlers::{
     product_h::{get_active_products, get_product_by_id, get_products_by_category_id},
@@ -50,39 +50,46 @@ pub fn create_router(state: AppState) -> Router {
     );
 
 
+    let admin_routes = Router::new()
+        .route("/api/admin/products", get(get_products).post(create_product))
+        .route("/api/admin/orders", get(get_orders))
+        .route("/api/admin/products/:id/quantity", patch(update_product_quantity))
+        .route_layer(middleware::from_fn(require_admin));
+
     let products_routes = Router::new()
         .route("/api/products", get(get_active_products))
         .route("/api/products/:id", get(get_product_by_id))
         .route("/api/products/category/:id", get(get_products_by_category_id))
         .route("/api/products/:id/archive", patch(soft_delete_product))
         .route("/api/products/:id/restore", patch(restore_product))
-        .route("/api/products/:id/similar", get(get_similar_products))
-        .route("/api/admin/products", get(get_products).post(create_product))
-        .route("/api/admin/products/:id/quantity", patch(update_product_quantity));
+        .route("/api/products/:id/similar", get(get_similar_products));
 
     let users_routes = Router::new()
         .route("/api/users", get(get_users).post(create_user))
         .route("/api/users/:id", get(get_user_by_id).put(update_user_data).delete(delete_user))
         .route("/api/users/registration", post(registration_user))
         .route("/api/users/login", post(login_user));
-        // .route("/api/users/upd_data", post(update_user_data));
     
     let categories_routes = Router::new()
         .route("/api/orders", post(create_order).get(get_orders_by_user_id)) 
-        .route("/api/orders/:id", get(get_order_by_id))
-        .route("/api/admin/orders", get(get_orders));
+        .route("/api/orders/:id", get(get_order_by_id));
 
     let orders_routes = Router::new()
         .route("/api/categories", get(get_categories).post(create_category))
         .route("/api/categories/:id", get(get_category_by_id));
 
+    let images_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("public/images");
+    let static_routes = Router::new().nest_service("/images", ServeDir::new(images_dir));
 
     Router::new()
         .merge(products_routes)
         .merge(users_routes)
         .merge(categories_routes)
         .merge(orders_routes)
+        .merge(admin_routes)
+        .merge(static_routes)
         .layer(GovernorLayer { config: governor_conf })
         .layer(cors)
         .with_state(state)
 }
+

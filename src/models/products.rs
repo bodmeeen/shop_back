@@ -9,6 +9,7 @@ pub struct Product {
     pub old_price: Option<i64>, // Option, бо може бути NULL
     pub price: i64,
     pub quantity: i64,
+    pub image_url: Option<String>,
     pub status: String,
     pub is_active: bool,
     pub created_at: Option<String>,
